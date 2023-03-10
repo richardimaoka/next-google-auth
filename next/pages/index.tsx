@@ -1,9 +1,30 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import Head from "next/head";
+import Image from "next/image";
+import { Inter } from "next/font/google";
+import styles from "@/styles/Home.module.css";
+import { GetServerSideProps } from "next";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
+import { GoogleAuth } from "google-auth-library";
+const auth = new GoogleAuth({
+  scopes: "https://www.googleapis.com/auth/cloud-platform",
+});
+
+async function request(url: string, targetAudience: string | undefined) {
+  console.info(`request ${url} with target audience ${targetAudience}`);
+  const client = await auth.getIdTokenClient(targetAudience);
+  const res = await client.request({ url });
+  console.info(res.data);
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  request(context.resolvedUrl, "");
+  // ...
+
+  return {
+    props: {},
+  };
+};
 
 export default function Home() {
   return (
@@ -26,7 +47,7 @@ export default function Home() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              By{' '}
+              By{" "}
               <Image
                 src="/vercel.svg"
                 alt="Vercel Logo"
@@ -119,5 +140,5 @@ export default function Home() {
         </div>
       </main>
     </>
-  )
+  );
 }
