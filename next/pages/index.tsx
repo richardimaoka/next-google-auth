@@ -10,7 +10,7 @@ const auth = new GoogleAuth({
   scopes: "https://www.googleapis.com/auth/cloud-platform",
 });
 
-async function request(url: string, targetAudience: string | undefined) {
+async function request(url: string, targetAudience: string) {
   console.info(`request ${url} with target audience ${targetAudience}`);
   const client = await auth.getIdTokenClient(targetAudience);
   const res = await client.request({ url });
@@ -18,8 +18,12 @@ async function request(url: string, targetAudience: string | undefined) {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  request(context.resolvedUrl, "");
-  // ...
+  if (process.env.NODE_ENV === "production") {
+    console.log("in prod");
+    request(context.resolvedUrl, "");
+  } else {
+    console.log("non prod");
+  }
 
   return {
     props: {},
