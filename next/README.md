@@ -1,8 +1,12 @@
-- introduce direnv (do not use dotenv within app source code) https://direnv.net/
-  - https://blog.p1ass.com/posts/direnv-dotenv/
-  - https://zenn.dev/dove/articles/5fd7926e7da949 don't use dotenv in app source code
-- Add if NODE_ENV != production, then skip google-auth
-- Add NODE_ENV = production, in cloud run, and SERVICE_URL
 - For google-auth, Get URL from Cloud Run's env var
   - check the log and see if it works
+- Initialize ID token client in a library
   - throw on failure to load the env var
+- install and setup ApolloClient
+- in getServerSideProps
+  - check NODE_ENV
+  - if NODE_ENV == production, load ID token client
+  - call getRequestHeaders
+  - call client.query of ApolloClient with header option
+- test if above works
+  - and doesn't work when screwing up settings
