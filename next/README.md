@@ -2,6 +2,7 @@
   - check the log and see if it works
 - Initialize ID token client in a library
   - throw on failure to load the env var
+  - https://github.com/googleapis/google-auth-library-nodejs/blob/f921fc728083e8c954e58131fa75c07fef966164/src/auth/oauth2client.ts#L983
 - install and setup ApolloClient
 - in getServerSideProps
   - check NODE_ENV
