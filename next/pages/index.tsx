@@ -1,41 +1,68 @@
+import styles from "@/styles/Home.module.css";
+import {
+  ApolloClient,
+  createHttpLink,
+  gql,
+  InMemoryCache,
+} from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
+import { GoogleAuth } from "google-auth-library";
+import { GetServerSideProps } from "next";
+import { Inter } from "next/font/google";
 import Head from "next/head";
 import Image from "next/image";
-import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
-import { GetServerSideProps } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
-import { GoogleAuth } from "google-auth-library";
-import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 
-const client = new ApolloClient({
-  uri: "https://flyby-router-demo.herokuapp.com/",
-  cache: new InMemoryCache(),
-});
-
-const auth = new GoogleAuth({
-  scopes: "https://www.googleapis.com/auth/cloud-platform",
-});
-
-async function request() {
+const getProdApolloClient = async () => {
   const url = `${process.env.SERVICE_URL}`;
   const targetAudience = new URL(url).origin;
-  console.info(`request ${url} with target audience ${targetAudience}`);
-  const client = await auth.getIdTokenClient(targetAudience);
-  const res = await client.request({ url });
-  console.log("sucessfullllll", res.data);
-}
+
+  const auth = new GoogleAuth();
+  const googleAuthClient = await auth.getIdTokenClient(targetAudience);
+
+  const httpLink = createHttpLink({
+    uri: "https://flyby-router-demo.herokuapp.com/",
+  });
+
+  const authLink = setContext(async (_, { headers }) => {
+    // get the authentication token
+    const googleAuthHeaders = await googleAuthClient.getRequestHeaders();
+    console.log("successful - googleAuthHeaders:", googleAuthHeaders);
+    console.log("successful - resulting headers:", {
+      headers: {
+        ...headers,
+        authorization: `Bearer ${googleAuthHeaders.Authorization}`,
+      },
+    });
+
+    // return the headers to the context so httpLink can read them
+    return {
+      headers: {
+        ...headers,
+        authorization: `Bearer ${googleAuthHeaders.Authorization}`,
+      },
+    };
+  });
+
+  return new ApolloClient({
+    link: authLink.concat(httpLink),
+    cache: new InMemoryCache(),
+  });
+};
+
+const getDevApolloClient = async () => {
+  return new ApolloClient({
+    uri: "https://flyby-router-demo.herokuapp.com/",
+    cache: new InMemoryCache(),
+  });
+};
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  if (process.env.NODE_ENV === "production") {
-    console.log("in prod");
-    request().catch((err) => {
-      console.error(err.message);
-      process.exitCode = 1;
-    });
-  } else {
-    console.log("non prod");
-  }
+  const client =
+    process.env.NODE_ENV === "production"
+      ? await getProdApolloClient()
+      : await getDevApolloClient();
 
   client
     .query({
@@ -50,7 +77,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
       `,
     })
-    .then((result) => console.log(result));
+    .then((result) => console.log(JSON.stringify(result, undefined, 2)));
 
   return {
     props: {},
