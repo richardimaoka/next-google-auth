@@ -6,6 +6,13 @@ import { GetServerSideProps } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
 import { GoogleAuth } from "google-auth-library";
+import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
+
+const client = new ApolloClient({
+  uri: "https://flyby-router-demo.herokuapp.com/",
+  cache: new InMemoryCache(),
+});
+
 const auth = new GoogleAuth({
   scopes: "https://www.googleapis.com/auth/cloud-platform",
 });
@@ -29,6 +36,21 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   } else {
     console.log("non prod");
   }
+
+  client
+    .query({
+      query: gql`
+        query GetLocations {
+          locations {
+            id
+            name
+            description
+            photo
+          }
+        }
+      `,
+    })
+    .then((result) => console.log(result));
 
   return {
     props: {},
